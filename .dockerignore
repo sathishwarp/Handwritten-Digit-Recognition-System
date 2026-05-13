@@ -1,0 +1,27 @@
+# Git
+.git
+.gitignore
+
+# Python training files (not needed in Docker)
+train_model.py
+convert_model.py
+*.py
+__pycache__/
+*.pyc
+
+# Training artifacts
+saved_model/
+digit-recognizer/
+
+# Editor/OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc
+README.md
+*.md

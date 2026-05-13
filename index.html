@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Vision — Handwritten Digit Recognition</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23a78bfa'/><stop offset='100%25' stop-color='%2306b6d4'/></linearGradient></defs><circle cx='50' cy='50' r='45' fill='url(%23g)'/><text x='50' y='68' font-size='55' font-weight='800' fill='white' text-anchor='middle' font-family='sans-serif'>7</text></svg>"
+        type="image/svg+xml">
+    <meta name="description"
+        content="Draw a digit and let our AI predict it instantly. Powered by TensorFlow.js with a CNN trained on MNIST dataset, running entirely in your browser.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=4">
+</head>
+
+<body>
+    <!-- Animated background digits -->
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader-content">
+            <div class="neural-loader">
+                <div class="neuron n1"></div>
+                <div class="neuron n2"></div>
+                <div class="neuron n3"></div>
+                <div class="neuron n4"></div>
+                <div class="neuron n5"></div>
+                <div class="synapse s1"></div>
+                <div class="synapse s2"></div>
+                <div class="synapse s3"></div>
+                <div class="synapse s4"></div>
+            </div>
+            <h2 class="loader-title">Training Neural Network</h2>
+            <p class="loader-subtitle" id="loadingStatus">Downloading MNIST dataset...</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="loader-epoch" id="epochInfo">10 epochs for 99%+ accuracy</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <circle cx="20" cy="20" r="18" stroke="url(#grad)" stroke-width="2.5" />
+                        <path d="M14 26 C14 18, 20 12, 26 12" stroke="url(#grad)" stroke-width="2.5" fill="none"
+                            stroke-linecap="round" />
+                        <path d="M20 14 L20 28" stroke="url(#grad)" stroke-width="2" fill="none" stroke-linecap="round"
+                            opacity="0.5" />
+                        <defs>
+                            <linearGradient id="grad" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#a78bfa" />
+                                <stop offset="100%" stop-color="#06b6d4" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="logo-text">Digit<span class="logo-accent">Vision</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="#canvas-section" class="nav-link">Draw</a>
+                <a href="#how-it-works" class="nav-link">How it Works</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">✨ Powered by TensorFlow.js</div>
+            <h1 class="hero-title">
+                <span class="hero-line">Handwritten Digit</span>
+                <span class="hero-line gradient-text">Recognition</span>
+            </h1>
+            <p class="hero-subtitle">Draw any digit from 0–9 and watch our neural network predict it in real-time. The
+                entire CNN model runs right in your browser — no server needed.</p>
+            <a href="#canvas-section" class="hero-cta">
+                <span>Start Drawing</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M4 10h12m-4-4 4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Main Canvas Section -->
+    <section class="canvas-section" id="canvas-section">
+        <div class="container">
+            <div class="main-grid">
+                <!-- Drawing Panel -->
+                <div class="glass-card canvas-panel reveal-left">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="card-icon">✍️</span>
+                            Draw a Digit
+                        </h2>
+                        <div class="brush-size-control">
+                            <label for="brushSize">Brush</label>
+                            <input type="range" id="brushSize" min="8" max="32" value="18" class="slider">
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="drawCanvas" width="280" height="280"></canvas>
+                        <div class="canvas-hint" id="canvasHint">
+                            <span>Draw here ✏️</span>
+                        </div>
+                    </div>
+                    <div class="canvas-actions">
+                        <button class="btn btn-secondary" id="clearBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                            Clear
+                        </button>
+                        <button class="btn btn-primary" id="predictBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                            Predict
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prediction Panel -->
+                <div class="glass-card prediction-panel reveal-right">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <span class="card-icon">🧠</span>
+                            Prediction
+                        </h2>
+                        <div class="model-status" id="modelStatus">
+                            <span class="status-dot"></span>
+                            <span>Model Ready</span>
+                        </div>
+                    </div>
+
+                    <!-- Big Prediction Display -->
+                    <div class="prediction-display" id="predictionDisplay">
+                        <div class="predicted-digit" id="predictedDigit">?</div>
+                        <div class="confidence-label">Confidence</div>
+                        <div class="confidence-value" id="confidenceValue">—</div>
+                    </div>
+
+                    <!-- Confidence Bars -->
+                    <div class="confidence-bars" id="confidenceBars">
+                        <div class="bar-item" data-digit="0">
+                            <span class="bar-label">0</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar0"></div>
+                            </div>
+                            <span class="bar-value" id="val0">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="1">
+                            <span class="bar-label">1</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar1"></div>
+                            </div>
+                            <span class="bar-value" id="val1">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="2">
+                            <span class="bar-label">2</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar2"></div>
+                            </div>
+                            <span class="bar-value" id="val2">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="3">
+                            <span class="bar-label">3</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar3"></div>
+                            </div>
+                            <span class="bar-value" id="val3">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="4">
+                            <span class="bar-label">4</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar4"></div>
+                            </div>
+                            <span class="bar-value" id="val4">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="5">
+                            <span class="bar-label">5</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar5"></div>
+                            </div>
+                            <span class="bar-value" id="val5">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="6">
+                            <span class="bar-label">6</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar6"></div>
+                            </div>
+                            <span class="bar-value" id="val6">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="7">
+                            <span class="bar-label">7</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar7"></div>
+                            </div>
+                            <span class="bar-value" id="val7">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="8">
+                            <span class="bar-label">8</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar8"></div>
+                            </div>
+                            <span class="bar-value" id="val8">0%</span>
+                        </div>
+                        <div class="bar-item" data-digit="9">
+                            <span class="bar-label">9</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="bar9"></div>
+                            </div>
+                            <span class="bar-value" id="val9">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section class="how-section reveal" id="how-it-works">
+        <div class="container">
+            <h2 class="section-title">How it <span class="gradient-text">Works</span></h2>
+            <div class="steps-grid">
+                <div class="step-card glass-card reveal-scale">
+                    <div class="step-number">01</div>
+                    <div class="step-icon">✏️</div>
+                    <h3>Draw</h3>
+                    <p>Use your mouse or finger to draw any digit from 0 to 9 on the canvas.</p>
+                </div>
+                <div class="step-card glass-card reveal-scale">
+                    <div class="step-number">02</div>
+                    <div class="step-icon">🔄</div>
+                    <h3>Process</h3>
+                    <p>Your drawing is scaled to 28×28 pixels and normalized — the same format MNIST uses.</p>
+                </div>
+                <div class="step-card glass-card reveal-scale">
+                    <div class="step-number">03</div>
+                    <div class="step-icon">🧠</div>
+                    <h3>Predict</h3>
+                    <p>A Convolutional Neural Network analyzes the image and outputs confidence for each digit.</p>
+                </div>
+                <div class="step-card glass-card reveal-scale">
+                    <div class="step-number">04</div>
+                    <div class="step-icon">🎯</div>
+                    <h3>Result</h3>
+                    <p>See the predicted digit along with a confidence breakdown for all 10 possibilities.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Built with ❤️ using <strong>TensorFlow.js</strong> &amp; <strong>MNIST</strong> dataset</p>
+            <p class="footer-sub">CNN model trained in-browser • No data leaves your device</p>
+        </div>
+    </footer>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+    <script src="main.js?v=4"></script>
+</body>
+
+</html>
